@@ -1,18 +1,29 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
-import type { AppConfig, HapticStep, TierProfile } from "./types";
+import type { AppConfig, AudioSignature, AudioToneStep, HapticStep, TierProfile } from "./types";
+
+const DEFAULT_AUDIO: Record<string, AudioSignature> = {
+  trash: { tones: [{ frequencyHz: 21_000 }] },
+  normal: { tones: [{ frequencyHz: 21_150 }] },
+  magic: { tones: [{ frequencyHz: 21_150 }, { frequencyHz: 21_300 }] },
+  rare: { tones: [{ frequencyHz: 21_300 }, { frequencyHz: 21_450 }, { frequencyHz: 21_600 }] },
+  unique: { tones: [{ frequencyHz: 21_000 }, { frequencyHz: 21_150 }, { frequencyHz: 21_300 }, { frequencyHz: 21_450 }] },
+  jackpot: { tones: [{ frequencyHz: 21_300 }, { frequencyHz: 21_450 }, { frequencyHz: 21_600 }, { frequencyHz: 21_750 }, { frequencyHz: 21_900 }] },
+};
 
 const DEFAULT_TIERS: Record<string, TierProfile> = {
   trash: {
     label: "Trash",
     cooldownMs: 1800,
     steps: [{ intensity: 0.12, durationMs: 100 }],
+    audio: DEFAULT_AUDIO.trash,
   },
   normal: {
     label: "Normal",
     cooldownMs: 1600,
     steps: [{ intensity: 0.2, durationMs: 110 }],
+    audio: DEFAULT_AUDIO.normal,
   },
   magic: {
     label: "Magic",
@@ -21,6 +32,7 @@ const DEFAULT_TIERS: Record<string, TierProfile> = {
       { intensity: 0.24, durationMs: 100 },
       { intensity: 0.28, durationMs: 85, pauseMs: 40 },
     ],
+    audio: DEFAULT_AUDIO.magic,
   },
   rare: {
     label: "Rare",
@@ -30,6 +42,7 @@ const DEFAULT_TIERS: Record<string, TierProfile> = {
       { intensity: 0.42, durationMs: 95, pauseMs: 35 },
       { intensity: 0.5, durationMs: 110, pauseMs: 45 },
     ],
+    audio: DEFAULT_AUDIO.rare,
   },
   unique: {
     label: "Unique",
@@ -40,6 +53,7 @@ const DEFAULT_TIERS: Record<string, TierProfile> = {
       { intensity: 0.8, durationMs: 100, pauseMs: 35 },
       { intensity: 0.6, durationMs: 120, pauseMs: 50 },
     ],
+    audio: DEFAULT_AUDIO.unique,
   },
   jackpot: {
     label: "Jackpot",
@@ -51,6 +65,7 @@ const DEFAULT_TIERS: Record<string, TierProfile> = {
       { intensity: 0.9, durationMs: 140, pauseMs: 40 },
       { intensity: 1, durationMs: 160, pauseMs: 60 },
     ],
+    audio: DEFAULT_AUDIO.jackpot,
   },
 };
 
@@ -77,6 +92,7 @@ export function normalizeConfig(raw: unknown): AppConfig {
       label: typeof tier.label === "string" && tier.label.length > 0 ? tier.label : fallback?.label ?? name,
       cooldownMs: typeof tier.cooldownMs === "number" && Number.isFinite(tier.cooldownMs) && tier.cooldownMs > 0 ? tier.cooldownMs : fallback?.cooldownMs ?? 1000,
       steps: normalizeSteps(tier.steps, fallback?.steps),
+      audio: normalizeAudio(tier.audio, fallback?.audio),
     };
   }
 
@@ -135,4 +151,29 @@ function normalizeSteps(rawSteps: unknown, fallback: readonly HapticStep[] | und
   }
 
   return steps.length > 0 ? steps : fallback ?? [];
+}
+
+function normalizeAudio(rawAudio: unknown, fallback: AudioSignature | undefined): AudioSignature | undefined {
+  if (rawAudio === undefined) {
+    return fallback;
+  }
+
+  if (typeof rawAudio !== "object" || rawAudio === null) {
+    return fallback;
+  }
+
+  const tones = "tones" in rawAudio ? (rawAudio as { tones?: unknown }).tones : undefined;
+  if (!Array.isArray(tones) || tones.length === 0) {
+    return fallback;
+  }
+
+  const parsed: AudioToneStep[] = [];
+  for (const tone of tones) {
+    if (typeof tone !== "object" || tone === null) continue;
+    const step = tone as Partial<AudioToneStep>;
+    if (typeof step.frequencyHz !== "number" || !Number.isFinite(step.frequencyHz) || step.frequencyHz <= 0) continue;
+    parsed.push({ frequencyHz: step.frequencyHz, durationMs: typeof step.durationMs === "number" && step.durationMs > 0 ? step.durationMs : undefined });
+  }
+
+  return parsed.length > 0 ? { tones: parsed } : fallback;
 }

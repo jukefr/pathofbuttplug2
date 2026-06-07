@@ -7,6 +7,10 @@ export interface CliOptions {
   readonly tier?: string;
   readonly label?: string;
   readonly source?: string;
+  readonly audioSource?: string;
+  readonly outDir?: string;
+  readonly sampleRate?: number;
+  readonly kbps?: number;
   readonly positional?: string;
 }
 
@@ -17,6 +21,10 @@ export function parseCliArgs(args: readonly string[]): CliOptions {
   let tier: string | undefined;
   let label: string | undefined;
   let source: string | undefined;
+  let audioSource: string | undefined;
+  let outDir: string | undefined;
+  let sampleRate: number | undefined;
+  let kbps: number | undefined;
   let positional: string | undefined;
 
   for (let index = 1; index < args.length; index += 1) {
@@ -44,10 +52,32 @@ export function parseCliArgs(args: readonly string[]): CliOptions {
       source = args[++index];
       continue;
     }
+    if (value === "--audio-source" || value === "--monitor") {
+      audioSource = args[++index];
+      continue;
+    }
+    if (value === "--out-dir" || value === "-o") {
+      outDir = args[++index];
+      continue;
+    }
+    if (value === "--sample-rate" || value === "-r") {
+      const raw = Number(args[++index]);
+      if (Number.isInteger(raw) && raw > 0) {
+        sampleRate = raw;
+      }
+      continue;
+    }
+    if (value === "--kbps" || value === "-b") {
+      const raw = Number(args[++index]);
+      if (Number.isInteger(raw) && raw > 0) {
+        kbps = raw;
+      }
+      continue;
+    }
     if (positional === undefined) {
       positional = value;
     }
   }
 
-  return { command, configPath, portOverride, tier, label, source, positional };
+  return { command, configPath, portOverride, tier, label, source, audioSource, outDir, sampleRate, kbps, positional };
 }
