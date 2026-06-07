@@ -1,0 +1,21 @@
+{
+  "name": "poe2-buttplug-intiface",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "poe2-buttplug": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun run ./src/cli.ts serve",
+    "test": "bun test",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "buttplug": "5.0.1"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.14",
+    "typescript": "^5.9.2"
+  }
+}
