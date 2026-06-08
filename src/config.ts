@@ -65,7 +65,7 @@ const DEFAULT_TIERS: Record<string, TierProfile> = {
       { intensity: 0.9, durationMs: 140, pauseMs: 40 },
       { intensity: 1, durationMs: 160, pauseMs: 60 },
     ],
-    audio: DEFAULT_AUDIO.jackpot,
+    audio: { tones: [{ frequencyHz: 2_200 }, { frequencyHz: 2_500 }, { frequencyHz: 2_800 }, { frequencyHz: 3_100 }] },
   },
 };
 
