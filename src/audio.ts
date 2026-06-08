@@ -5,6 +5,15 @@ export interface ToneMatch {
   readonly label: string;
 }
 
+export interface ToneTrace {
+  readonly rms: number;
+  readonly bestFrequencyHz: number | null;
+  readonly bestPower: number;
+  readonly secondPower: number;
+  readonly matchedTier?: string;
+  readonly reason?: string;
+}
+
 interface TonePattern {
   readonly tier: string;
   readonly label: string;
@@ -16,6 +25,7 @@ interface DetectorOptions {
   readonly frameSize?: number;
   readonly minRms?: number;
   readonly minPowerRatio?: number;
+  readonly trace?: (trace: ToneTrace) => void;
 }
 
 export class TonePatternDetector {
@@ -25,6 +35,7 @@ export class TonePatternDetector {
   private readonly frequencies: readonly number[];
   private readonly coefficients: ReadonlyMap<number, number>;
   private readonly patterns: readonly TonePattern[];
+  private readonly trace?: (trace: ToneTrace) => void;
   private readonly buffer: number[] = [];
   private readonly sequence: number[] = [];
 
@@ -32,6 +43,7 @@ export class TonePatternDetector {
     this.frameSize = options.frameSize ?? 2048;
     this.minRms = options.minRms ?? 0.012;
     this.minPowerRatio = options.minPowerRatio ?? 1.8;
+    this.trace = options.trace;
     this.patterns = buildPatterns(profiles);
     this.frequencies = uniqueFrequencies(this.patterns);
     this.coefficients = buildCoefficients(this.frequencies, options.sampleRate, this.frameSize);
@@ -63,6 +75,13 @@ export class TonePatternDetector {
 
     const rms = Math.sqrt(energy / frame.length);
     if (rms < this.minRms || this.frequencies.length === 0) {
+      this.trace?.({
+        rms,
+        bestFrequencyHz: null,
+        bestPower: 0,
+        secondPower: 0,
+        reason: rms < this.minRms ? "below-rms-threshold" : "no-frequencies-configured",
+      });
       return null;
     }
 
@@ -85,6 +104,13 @@ export class TonePatternDetector {
     }
 
     if (bestFrequency === 0 || bestPower <= 0 || bestPower < secondPower * this.minPowerRatio) {
+      this.trace?.({
+        rms,
+        bestFrequencyHz: bestFrequency === 0 ? null : bestFrequency,
+        bestPower,
+        secondPower,
+        reason: bestFrequency === 0 ? "no-dominant-frequency" : "frequency-ambiguous",
+      });
       return null;
     }
 
@@ -99,6 +125,15 @@ export class TonePatternDetector {
     if (match !== null) {
       this.sequence.length = 0;
     }
+
+    this.trace?.({
+      rms,
+      bestFrequencyHz: bestFrequency,
+      bestPower,
+      secondPower,
+      matchedTier: match?.tier,
+      reason: match === null ? "sequence-building" : "matched",
+    });
 
     return match;
   }

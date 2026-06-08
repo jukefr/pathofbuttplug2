@@ -26,4 +26,11 @@ describe("parseCliArgs", () => {
     expect(parsed.sampleRate).toBe(48000);
     expect(parsed.kbps).toBe(96);
   });
+
+  test("enables trace mode", () => {
+    const parsed = parseCliArgs(["detect", "--trace"]);
+
+    expect(parsed.command).toBe("detect");
+    expect(parsed.trace).toBe(true);
+  });
 });

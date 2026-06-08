@@ -58,4 +58,18 @@ describe("TonePatternDetector", () => {
 
     expect(match).toBeNull();
   });
+
+  test("emits trace events", () => {
+    const traces: unknown[] = [];
+    const detector = new TonePatternDetector(profiles, {
+      sampleRate,
+      frameSize: 1_024,
+      trace: (trace) => traces.push(trace),
+    });
+
+    detector.push(new Float32Array(4_096));
+
+    expect(traces.length).toBeGreaterThan(0);
+    expect((traces[0] as { reason?: string }).reason).toBeDefined();
+  });
 });

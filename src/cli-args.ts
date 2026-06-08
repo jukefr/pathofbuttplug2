@@ -11,6 +11,7 @@ export interface CliOptions {
   readonly outDir?: string;
   readonly sampleRate?: number;
   readonly kbps?: number;
+  readonly trace?: boolean;
   readonly positional?: string;
 }
 
@@ -25,6 +26,7 @@ export function parseCliArgs(args: readonly string[]): CliOptions {
   let outDir: string | undefined;
   let sampleRate: number | undefined;
   let kbps: number | undefined;
+  let trace = false;
   let positional: string | undefined;
 
   for (let index = 1; index < args.length; index += 1) {
@@ -74,10 +76,14 @@ export function parseCliArgs(args: readonly string[]): CliOptions {
       }
       continue;
     }
+    if (value === "--trace" || value === "-v") {
+      trace = true;
+      continue;
+    }
     if (positional === undefined) {
       positional = value;
     }
   }
 
-  return { command, configPath, portOverride, tier, label, source, audioSource, outDir, sampleRate, kbps, positional };
+  return { command, configPath, portOverride, tier, label, source, audioSource, outDir, sampleRate, kbps, trace, positional };
 }

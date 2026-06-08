@@ -1,6 +1,6 @@
 import { createApp } from "./app";
 import { parseCliArgs } from "./cli-args";
-import { TonePatternDetector } from "./audio";
+import { TonePatternDetector, type ToneTrace } from "./audio";
 import { LinuxAudioRunner } from "./linux-audio";
 import { toneManifest, writeSoundPack } from "./sounds";
 
@@ -44,7 +44,14 @@ if (parsed.command === "detect") {
     process.exit(1);
   }
 
-  const detector = new TonePatternDetector(app.config.tiers, { sampleRate: 48_000 });
+  const detector = new TonePatternDetector(app.config.tiers, {
+    sampleRate: 48_000,
+    trace: parsed.trace
+      ? (trace: ToneTrace) => {
+          console.log(JSON.stringify({ type: "trace", ...trace }));
+        }
+      : undefined,
+  });
   const runner = new LinuxAudioRunner(app.config, detector, async (match) => {
     const result = await app.service.trigger({ tier: match.tier, label: match.label, source: "audio" });
     const payload = { match, result };
@@ -59,7 +66,7 @@ if (parsed.command === "detect") {
     process.exit(0);
   });
 
-  console.log(JSON.stringify({ ok: true, audioSource: parsed.audioSource ?? app.config.audioSource ?? "@DEFAULT_MONITOR@" }));
+  console.log(JSON.stringify({ ok: true, audioSource: parsed.audioSource ?? app.config.audioSource ?? "@DEFAULT_MONITOR@", trace: parsed.trace ?? false }));
   await new Promise<void>(() => {});
 }
 

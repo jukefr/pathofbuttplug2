@@ -108,7 +108,7 @@ async function startCapture(
 
   for (const [command, args] of attempts) {
     const process = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
-    const ready = await waitForStableCapture(process, onChunk, 250);
+    const ready = await waitForStableCapture(process, onChunk, 1_000);
     if (ready) {
       return { process };
     }
