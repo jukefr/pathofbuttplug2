@@ -24,11 +24,11 @@ export interface SoundPackManifest {
 }
 
 export const SOUND_PRESETS: readonly SoundPreset[] = [
-  { filename: "1maybevaluable.mp3", label: "Maybe Valuable", intensity: "small", frequencyHz: 440, durationMs: 90, amplitude: 0.12 },
-  { filename: "2currency.mp3", label: "Currency", intensity: "medium", frequencyHz: 587, durationMs: 120, amplitude: 0.2 },
-  { filename: "3uniques.mp3", label: "Uniques", intensity: "medium", frequencyHz: 784, durationMs: 120, amplitude: 0.2 },
-  { filename: "4maps.mp3", label: "Maps", intensity: "small", frequencyHz: 659, durationMs: 90, amplitude: 0.12 },
-  { filename: "6veryvaluable.mp3", label: "Very Valuable", intensity: "strong", frequencyHz: 1_046, durationMs: 180, amplitude: 0.28 },
+  { filename: "1maybevaluable.mp3", label: "Maybe Valuable", intensity: "small", frequencyHz: 17_500, durationMs: 90, amplitude: 0.12 },
+  { filename: "2currency.mp3", label: "Currency", intensity: "medium", frequencyHz: 17_900, durationMs: 110, amplitude: 0.18 },
+  { filename: "3uniques.mp3", label: "Uniques", intensity: "medium", frequencyHz: 18_300, durationMs: 110, amplitude: 0.18 },
+  { filename: "4maps.mp3", label: "Maps", intensity: "small", frequencyHz: 18_700, durationMs: 90, amplitude: 0.12 },
+  { filename: "6veryvaluable.mp3", label: "Very Valuable", intensity: "strong", frequencyHz: 19_100, durationMs: 160, amplitude: 0.24 },
 ];
 
 export async function writeSoundPack(outDir: string, sampleRate = 48_000, kbps = 128): Promise<readonly SoundFileInfo[]> {

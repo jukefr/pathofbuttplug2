@@ -9,13 +9,13 @@ const profiles: Record<string, TierProfile> = {
     label: "Rare",
     cooldownMs: 1_200,
     steps: [{ intensity: 0.4, durationMs: 100 }],
-    audio: { tones: [{ frequencyHz: 784 }] },
+    audio: { tones: [{ frequencyHz: 18_700 }] },
   },
   unique: {
     label: "Unique",
     cooldownMs: 1_000,
     steps: [{ intensity: 0.7, durationMs: 100 }],
-    audio: { tones: [{ frequencyHz: 1_046 }] },
+    audio: { tones: [{ frequencyHz: 19_100 }] },
   },
 };
 
@@ -42,7 +42,7 @@ function concat(...parts: Float32Array[]): Float32Array {
 describe("TonePatternDetector", () => {
   test("matches a configured tone sequence", () => {
     const detector = new TonePatternDetector(profiles, { sampleRate, frameSize: 1_024 });
-    const audio = concat(sineWave(784, 140), sineWave(784, 140), sineWave(784, 140));
+    const audio = concat(sineWave(18_700, 140), sineWave(18_700, 140), sineWave(18_700, 140));
 
     const match = detector.push(audio);
 

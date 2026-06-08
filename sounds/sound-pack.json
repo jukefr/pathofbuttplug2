@@ -6,7 +6,7 @@
       "filename": "1maybevaluable.mp3",
       "label": "Maybe Valuable",
       "intensity": "small",
-      "frequencyHz": 440,
+      "frequencyHz": 17500,
       "durationMs": 90,
       "amplitude": 0.12
     },
@@ -14,23 +14,23 @@
       "filename": "2currency.mp3",
       "label": "Currency",
       "intensity": "medium",
-      "frequencyHz": 587,
-      "durationMs": 120,
-      "amplitude": 0.2
+      "frequencyHz": 17900,
+      "durationMs": 110,
+      "amplitude": 0.18
     },
     {
       "filename": "3uniques.mp3",
       "label": "Uniques",
       "intensity": "medium",
-      "frequencyHz": 784,
-      "durationMs": 120,
-      "amplitude": 0.2
+      "frequencyHz": 18300,
+      "durationMs": 110,
+      "amplitude": 0.18
     },
     {
       "filename": "4maps.mp3",
       "label": "Maps",
       "intensity": "small",
-      "frequencyHz": 659,
+      "frequencyHz": 18700,
       "durationMs": 90,
       "amplitude": 0.12
     },
@@ -38,9 +38,9 @@
       "filename": "6veryvaluable.mp3",
       "label": "Very Valuable",
       "intensity": "strong",
-      "frequencyHz": 1046,
-      "durationMs": 180,
-      "amplitude": 0.28
+      "frequencyHz": 19100,
+      "durationMs": 160,
+      "amplitude": 0.24
     }
   ]
 }
