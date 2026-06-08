@@ -100,7 +100,7 @@ async function startCapture(source: string, sampleRate: number, channels: number
 
   for (const [command, args] of attempts) {
     const process = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
-    const ready = await waitForCaptureData(process, 750);
+    const ready = await waitForCaptureReady(process, 1_000);
     if (ready) {
       return { process };
     }
@@ -111,26 +111,23 @@ async function startCapture(source: string, sampleRate: number, channels: number
   throw new Error("Could not start Linux audio capture. Install pw-record or parec and point audioSource at a monitor source.");
 }
 
-function waitForCaptureData(process: ChildProcess & { stdout: Readable }, timeoutMs: number): Promise<boolean> {
+function waitForCaptureReady(process: ChildProcess & { stdout: Readable }, timeoutMs: number): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     let settled = false;
     const finish = (value: boolean): void => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      process.stdout.off("data", onData);
       process.off("error", onError);
       process.off("exit", onExit);
       process.off("close", onExit);
       resolve(value);
     };
 
-    const onData = (): void => finish(true);
     const onError = (): void => finish(false);
     const onExit = (): void => finish(false);
-    const timer = setTimeout(() => finish(false), timeoutMs);
+    const timer = setTimeout(() => finish(true), timeoutMs);
 
-    process.stdout.once("data", onData);
     process.once("error", onError);
     process.once("exit", onExit);
     process.once("close", onExit);
