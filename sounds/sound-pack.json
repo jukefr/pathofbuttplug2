@@ -11,7 +11,8 @@
         2000,
         1800
       ],
-      "toneMs": 95,
+      "toneMs": 70,
+      "pauseMs": 45,
       "amplitude": 0.12
     },
     {
@@ -23,7 +24,8 @@
         2100,
         2300
       ],
-      "toneMs": 90,
+      "toneMs": 70,
+      "pauseMs": 45,
       "amplitude": 0.16
     },
     {
@@ -36,7 +38,8 @@
         2000,
         2400
       ],
-      "toneMs": 90,
+      "toneMs": 65,
+      "pauseMs": 40,
       "amplitude": 0.16
     },
     {
@@ -48,7 +51,8 @@
         2400,
         2100
       ],
-      "toneMs": 85,
+      "toneMs": 75,
+      "pauseMs": 55,
       "amplitude": 0.12
     },
     {
@@ -61,7 +65,8 @@
         2800,
         3100
       ],
-      "toneMs": 85,
+      "toneMs": 60,
+      "pauseMs": 35,
       "amplitude": 0.22
     }
   ]

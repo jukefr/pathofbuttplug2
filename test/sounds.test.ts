@@ -19,6 +19,7 @@ describe("writeSoundPack", () => {
       expect(manifest.sampleRate).toBe(48_000);
       expect(manifest.kbps).toBe(96);
       expect(manifest.files[0].tones).toEqual([1_800, 2_000, 1_800]);
+      expect(manifest.files[0].pauseMs).toBe(45);
       expect(manifest.files[4].tones).toEqual([2_200, 2_500, 2_800, 3_100]);
 
       const mp3 = await readFile(join(dir, "2currency.mp3"));
