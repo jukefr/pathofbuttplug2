@@ -24,7 +24,7 @@ describe("config", () => {
     expect(config.tiers.rare.label).toBe("Rare");
     expect(config.tiers.rare.cooldownMs).toBe(2222);
     expect(config.tiers.rare.steps).toHaveLength(3);
-    expect(config.tiers.rare.audio?.tones).toHaveLength(1);
+    expect(config.tiers.rare.audio?.tones).toHaveLength(3);
   });
 
   test("loadConfig creates missing file", async () => {

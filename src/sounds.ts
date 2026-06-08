@@ -7,8 +7,8 @@ export interface SoundPreset {
   readonly filename: string;
   readonly label: string;
   readonly intensity: "small" | "medium" | "strong";
-  readonly frequencyHz: number;
-  readonly durationMs: number;
+  readonly tones: readonly number[];
+  readonly toneMs: number;
   readonly amplitude: number;
 }
 
@@ -24,11 +24,11 @@ export interface SoundPackManifest {
 }
 
 export const SOUND_PRESETS: readonly SoundPreset[] = [
-  { filename: "1maybevaluable.mp3", label: "Maybe Valuable", intensity: "small", frequencyHz: 17_500, durationMs: 90, amplitude: 0.12 },
-  { filename: "2currency.mp3", label: "Currency", intensity: "medium", frequencyHz: 17_900, durationMs: 110, amplitude: 0.18 },
-  { filename: "3uniques.mp3", label: "Uniques", intensity: "medium", frequencyHz: 18_300, durationMs: 110, amplitude: 0.18 },
-  { filename: "4maps.mp3", label: "Maps", intensity: "small", frequencyHz: 18_700, durationMs: 90, amplitude: 0.12 },
-  { filename: "6veryvaluable.mp3", label: "Very Valuable", intensity: "strong", frequencyHz: 19_100, durationMs: 160, amplitude: 0.24 },
+  { filename: "1maybevaluable.mp3", label: "Maybe Valuable", intensity: "small", tones: [1_800, 2_000, 1_800], toneMs: 95, amplitude: 0.12 },
+  { filename: "2currency.mp3", label: "Currency", intensity: "medium", tones: [1_900, 2_100, 2_300], toneMs: 90, amplitude: 0.16 },
+  { filename: "3uniques.mp3", label: "Uniques", intensity: "medium", tones: [2_000, 2_200, 2_000, 2_400], toneMs: 90, amplitude: 0.16 },
+  { filename: "4maps.mp3", label: "Maps", intensity: "small", tones: [2_100, 2_400, 2_100], toneMs: 85, amplitude: 0.12 },
+  { filename: "6veryvaluable.mp3", label: "Very Valuable", intensity: "strong", tones: [2_200, 2_500, 2_800, 3_100], toneMs: 85, amplitude: 0.22 },
 ];
 
 export async function writeSoundPack(outDir: string, sampleRate = 48_000, kbps = 128): Promise<readonly SoundFileInfo[]> {
@@ -122,34 +122,22 @@ async function ensureLameGlobals(): Promise<void> {
 }
 
 function makeTonePcm(preset: SoundPreset, sampleRate: number): Int16Array {
-  const fadeMs = 8;
-  const leadInMs = 10;
-  const tailOutMs = 16;
-  const toneSamples = Math.max(1, Math.trunc(sampleRate * (preset.durationMs / 1000)));
-  const leadInSamples = Math.trunc(sampleRate * (leadInMs / 1000));
-  const tailOutSamples = Math.trunc(sampleRate * (tailOutMs / 1000));
-  const fadeSamples = Math.max(1, Math.trunc(sampleRate * (fadeMs / 1000)));
-  const total = leadInSamples + toneSamples + tailOutSamples;
-  const pcm = new Int16Array(total);
+  const toneSamples = Math.max(1, Math.trunc(sampleRate * (preset.toneMs / 1000)));
+  const fadeSamples = Math.max(1, Math.trunc(sampleRate * (8 / 1000)));
+  const pcm = new Int16Array(toneSamples * preset.tones.length);
   const amplitude = clamp01(preset.amplitude);
 
-  for (let index = 0; index < total; index += 1) {
-    if (index < leadInSamples) {
-      pcm[index] = 0;
-      continue;
+  let offset = 0;
+  for (const frequencyHz of preset.tones) {
+    for (let toneIndex = 0; toneIndex < toneSamples; toneIndex += 1) {
+      const attack = Math.min(1, toneIndex / fadeSamples);
+      const release = Math.min(1, (toneSamples - toneIndex) / fadeSamples);
+      const envelope = Math.min(attack, release);
+      const sample = Math.sin((2 * Math.PI * frequencyHz * toneIndex) / sampleRate) * amplitude * envelope;
+      pcm[offset + toneIndex] = floatToInt16(sample);
     }
 
-    const toneIndex = index - leadInSamples;
-    if (toneIndex >= toneSamples) {
-      pcm[index] = 0;
-      continue;
-    }
-
-    const attack = Math.min(1, toneIndex / fadeSamples);
-    const release = Math.min(1, (toneSamples - toneIndex) / fadeSamples);
-    const envelope = Math.min(attack, release);
-    const sample = Math.sin((2 * Math.PI * preset.frequencyHz * toneIndex) / sampleRate) * amplitude * envelope;
-    pcm[index] = floatToInt16(sample);
+    offset += toneSamples;
   }
 
   return pcm;
