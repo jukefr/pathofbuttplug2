@@ -36,14 +36,17 @@ export class LinuxAudioRunner {
 
     this.stopped = false;
     this.pendingBytes = new Uint8Array(0);
-    const capture = await startCapture(this.options.audioSource ?? this.config.audioSource ?? "@DEFAULT_MONITOR@", this.options.sampleRate ?? 48_000, this.options.channels ?? 2);
+    const capture = await startCapture(
+      this.options.audioSource ?? this.config.audioSource ?? "@DEFAULT_MONITOR@",
+      this.options.sampleRate ?? 48_000,
+      this.options.channels ?? 2,
+      (chunk) => {
+        void this.consume(chunk).catch((error) => {
+          console.error(error instanceof Error ? error.message : String(error));
+        });
+      },
+    );
     this.process = capture.process;
-
-    this.process.stdout.on("data", (chunk: Buffer) => {
-      void this.consume(chunk).catch((error) => {
-        console.error(error instanceof Error ? error.message : String(error));
-      });
-    });
 
     this.process.on("close", () => {
       this.process = null;
@@ -92,7 +95,12 @@ export class LinuxAudioRunner {
   }
 }
 
-async function startCapture(source: string, sampleRate: number, channels: number): Promise<{ readonly process: ChildProcess & { stdout: Readable } }> {
+async function startCapture(
+  source: string,
+  sampleRate: number,
+  channels: number,
+  onChunk: (chunk: Buffer) => void,
+): Promise<{ readonly process: ChildProcess & { stdout: Readable } }> {
   const attempts: Array<readonly [string, readonly string[]]> = [
     ["parec", ["-d", source, "--format=s16le", "--rate", String(sampleRate), "--channels", String(channels)]],
     ["pw-record", ["--raw", "--rate", String(sampleRate), "--channels", String(channels), "--format", "s16", "--target", source, "-"]],
@@ -100,34 +108,64 @@ async function startCapture(source: string, sampleRate: number, channels: number
 
   for (const [command, args] of attempts) {
     const process = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
-    const ready = await waitForCaptureReady(process, 1_000);
+    const ready = await waitForStableCapture(process, onChunk, 250);
     if (ready) {
       return { process };
     }
-
-    process.kill("SIGTERM");
   }
 
   throw new Error("Could not start Linux audio capture. Install pw-record or parec and point audioSource at a monitor source.");
 }
 
-function waitForCaptureReady(process: ChildProcess & { stdout: Readable }, timeoutMs: number): Promise<boolean> {
+function waitForStableCapture(process: ChildProcess & { stdout: Readable }, onChunk: (chunk: Buffer) => void, timeoutMs: number): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     let settled = false;
+    let live = false;
+    const pending: Buffer[] = [];
+
     const finish = (value: boolean): void => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      process.off("error", onError);
-      process.off("exit", onExit);
-      process.off("close", onExit);
+      if (!value) {
+        process.stdout.off("data", onData);
+        process.off("error", onError);
+        process.off("exit", onExit);
+        process.off("close", onExit);
+      }
       resolve(value);
+    };
+
+    const flush = (): void => {
+      live = true;
+      for (let index = 0; index < pending.length; index += 1) {
+        onChunk(pending[index]);
+      }
+      pending.length = 0;
+    };
+
+    const onData = (chunk: Buffer): void => {
+      if (live) {
+        onChunk(chunk);
+        return;
+      }
+
+      pending.push(Buffer.from(chunk));
     };
 
     const onError = (): void => finish(false);
     const onExit = (): void => finish(false);
-    const timer = setTimeout(() => finish(true), timeoutMs);
+    const timer = setTimeout(() => {
+      if (process.exitCode !== null || process.signalCode !== null) {
+        finish(false);
+        return;
+      }
 
+      flush();
+      finish(true);
+    }, timeoutMs);
+
+    process.stdout.on("data", onData);
     process.once("error", onError);
     process.once("exit", onExit);
     process.once("close", onExit);
