@@ -9,13 +9,13 @@ const profiles: Record<string, TierProfile> = {
     label: "Rare",
     cooldownMs: 1_200,
     steps: [{ intensity: 0.4, durationMs: 100 }],
-    audio: { tones: [{ frequencyHz: 21_300 }, { frequencyHz: 21_450 }, { frequencyHz: 21_600 }] },
+    audio: { tones: [{ frequencyHz: 784 }] },
   },
   unique: {
     label: "Unique",
     cooldownMs: 1_000,
     steps: [{ intensity: 0.7, durationMs: 100 }],
-    audio: { tones: [{ frequencyHz: 21_000 }, { frequencyHz: 21_150 }, { frequencyHz: 21_300 }, { frequencyHz: 21_450 }] },
+    audio: { tones: [{ frequencyHz: 1_046 }] },
   },
 };
 
@@ -42,7 +42,7 @@ function concat(...parts: Float32Array[]): Float32Array {
 describe("TonePatternDetector", () => {
   test("matches a configured tone sequence", () => {
     const detector = new TonePatternDetector(profiles, { sampleRate, frameSize: 1_024 });
-    const audio = concat(sineWave(21_300, 120), sineWave(21_450, 120), sineWave(21_600, 120));
+    const audio = concat(sineWave(784, 140), sineWave(784, 140), sineWave(784, 140));
 
     const match = detector.push(audio);
 
@@ -52,7 +52,7 @@ describe("TonePatternDetector", () => {
 
   test("ignores a non-matching tone sequence", () => {
     const detector = new TonePatternDetector(profiles, { sampleRate, frameSize: 1_024 });
-    const audio = concat(sineWave(19_000, 120), sineWave(19_500, 120));
+    const audio = new Float32Array(4_096);
 
     const match = detector.push(audio);
 

@@ -4,12 +4,12 @@ import { homedir } from "node:os";
 import type { AppConfig, AudioSignature, AudioToneStep, HapticStep, TierProfile } from "./types";
 
 const DEFAULT_AUDIO: Record<string, AudioSignature> = {
-  trash: { tones: [{ frequencyHz: 21_000 }] },
-  normal: { tones: [{ frequencyHz: 21_150 }] },
-  magic: { tones: [{ frequencyHz: 21_150 }, { frequencyHz: 21_300 }] },
-  rare: { tones: [{ frequencyHz: 21_300 }, { frequencyHz: 21_450 }, { frequencyHz: 21_600 }] },
-  unique: { tones: [{ frequencyHz: 21_000 }, { frequencyHz: 21_150 }, { frequencyHz: 21_300 }, { frequencyHz: 21_450 }] },
-  jackpot: { tones: [{ frequencyHz: 21_300 }, { frequencyHz: 21_450 }, { frequencyHz: 21_600 }, { frequencyHz: 21_750 }, { frequencyHz: 21_900 }] },
+  trash: { tones: [{ frequencyHz: 440 }] },
+  normal: { tones: [{ frequencyHz: 587 }] },
+  magic: { tones: [{ frequencyHz: 659 }] },
+  rare: { tones: [{ frequencyHz: 784 }] },
+  unique: { tones: [{ frequencyHz: 1_046 }] },
+  jackpot: { tones: [{ frequencyHz: 1_319 }] },
 };
 
 const DEFAULT_TIERS: Record<string, TierProfile> = {
