@@ -94,22 +94,47 @@ export class LinuxAudioRunner {
 
 async function startCapture(source: string, sampleRate: number, channels: number): Promise<{ readonly process: ChildProcess & { stdout: Readable } }> {
   const attempts: Array<readonly [string, readonly string[]]> = [
-    ["pw-record", ["--raw", "--rate", String(sampleRate), "--channels", String(channels), "--format", "s16", "--target", source, "-"]],
     ["parec", ["-d", source, "--format=s16le", "--rate", String(sampleRate), "--channels", String(channels)]],
+    ["pw-record", ["--raw", "--rate", String(sampleRate), "--channels", String(channels), "--format", "s16", "--target", source, "-"]],
   ];
 
   for (const [command, args] of attempts) {
     const process = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
-    const ready = new Promise<boolean>((resolve) => {
-      process.once("error", () => resolve(false));
-      process.once("spawn", () => resolve(true));
-    });
-    if (await ready) {
+    const ready = await waitForCaptureData(process, 750);
+    if (ready) {
       return { process };
     }
+
+    process.kill("SIGTERM");
   }
 
   throw new Error("Could not start Linux audio capture. Install pw-record or parec and point audioSource at a monitor source.");
+}
+
+function waitForCaptureData(process: ChildProcess & { stdout: Readable }, timeoutMs: number): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (value: boolean): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      process.stdout.off("data", onData);
+      process.off("error", onError);
+      process.off("exit", onExit);
+      process.off("close", onExit);
+      resolve(value);
+    };
+
+    const onData = (): void => finish(true);
+    const onError = (): void => finish(false);
+    const onExit = (): void => finish(false);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+
+    process.stdout.once("data", onData);
+    process.once("error", onError);
+    process.once("exit", onExit);
+    process.once("close", onExit);
+  });
 }
 
 function concatBytes(previous: Uint8Array<ArrayBufferLike>, chunk: Buffer): Uint8Array<ArrayBufferLike> {
